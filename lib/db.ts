@@ -53,7 +53,7 @@ export async function storeHubSpotInstall(
     const { data: existingInstall } = await supabaseAdmin
       .from("hubspot_installs")
       .select("*")
-      .eq("portalId", portalId)
+      .eq("portal_id", portalId)
       .single()
 
     let result
@@ -68,7 +68,7 @@ export async function storeHubSpotInstall(
           expiresAt: expiresAt.toISOString(),
           updatedAt: new Date().toISOString(),
         })
-        .eq("portalId", portalId)
+        .eq("portal_id", portalId)
         .select()
         .single()
     } else {
@@ -101,7 +101,7 @@ export async function storeHubSpotInstall(
 // Get a HubSpot installation by portal ID
 export async function getHubSpotInstall(portalId: string) {
   try {
-    const { data, error } = await supabaseAdmin.from("hubspot_installs").select("*").eq("portalId", portalId).single()
+    const { data, error } = await supabaseAdmin.from("hubspot_installs").select("*").eq("portal_id", portalId).single()
 
     if (error) {
       return { success: false, error: error.message }
@@ -143,7 +143,7 @@ export async function deleteHubSpotInstall(portalId: string) {
     const { data, error } = await supabaseAdmin
       .from("hubspot_installs")
       .delete()
-      .eq("portalId", portalId)
+      .eq("portal_id", portalId)
       .select()
       .single()
 
