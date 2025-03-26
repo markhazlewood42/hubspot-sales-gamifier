@@ -19,6 +19,11 @@ export default function Home() {
   const redirectUri = `${baseUrl}/api/auth/hubspot/callback`
   const oauthUrl = getOAuthUrl(redirectUri)
 
+  // Get the last deployment timestamp from Vercel environment variables
+  const lastUpdatedTimestamp = process.env.VERCEL_GIT_COMMIT_TIMESTAMP
+    ? new Date(parseInt(process.env.VERCEL_GIT_COMMIT_TIMESTAMP) * 1000).toLocaleString()
+    : "Unknown";
+
   return (
     // In Next.js, you can use regular HTML elements and CSS classes
     // The className attribute is used instead of class (React standard)
@@ -34,6 +39,9 @@ export default function Home() {
         >
           Connect to HubSpot
         </a>
+        <p className="text-sm text-gray-500 mt-4">
+          Last updated: {lastUpdatedTimestamp}
+        </p>
       </div>
     </main>
   )
