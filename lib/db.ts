@@ -1,0 +1,190 @@
+/**
+ * Database utility functions for connecting to Supabase and managing app data.
+ * Provides methods for storing and retrieving HubSpot app installations.
+ */
+import { supabaseAdmin } from "./supabase"
+
+// Type definition for HubSpot installation
+export type HubSpotInstall = {
+  id?: number
+  portalId: string
+  accessToken: string
+  refreshToken: string
+  expiresAt: Date
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+// Initialize the database by creating necessary tables if they don't exist
+export async function initDatabase() {
+  try {
+    // Check if the table exists
+    const { data: tableExists } = await supabaseAdmin.from("hubspot_installs").select("*").limit(1)
+
+    // If the table doesn't exist, we need to create it
+    // Note: Supabase doesn't have a direct "CREATE TABLE IF NOT EXISTS" equivalent in the JS client
+    // You would typically create tables through the Supabase dashboard or migrations
+
+    if (tableExists === null) {
+      console.warn("The hubspot_installs table might not exist. Please create it in the Supabase dashboard.")
+      return { success: false, error: "Table might not exist" }
+    }
+
+    console.log("Database initialized successfully")
+    return { success: true }
+  } catch (error) {
+    console.error("Failed to initialize database:", error)
+    return { success: false, error }
+  }
+}
+
+// Store a new HubSpot app installation or update an existing one
+export async function storeHubSpotInstall(
+  portalId: string,
+  accessToken: string,
+  refreshToken: string,
+  expiresIn: number,
+) {
+  try {
+    // Calculate the expiration timestamp
+    const expiresAt = new Date(Date.now() + expiresIn * 1000)
+
+    // Check if the installation already exists
+    const { data: existingInstall } = await supabaseAdmin
+      .from("hubspot_installs")
+      .select("*")
+      .eq("portalId", portalId)
+      .single()
+
+    let result
+
+    if (existingInstall) {
+      // Update existing installation
+      result = await supabaseAdmin
+        .from("hubspot_installs")
+        .update({
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          expiresAt: expiresAt.toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
+        .eq("portalId", portalId)
+        .select()
+        .single()
+    } else {
+      // Insert new installation
+      result = await supabaseAdmin
+        .from("hubspot_installs")
+        .insert({
+          portalId: portalId,
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          expiresAt: expiresAt.toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
+        .select()
+        .single()
+    }
+
+    if (result.error) {
+      throw result.error
+    }
+
+    return { success: true, install: result.data }
+  } catch (error) {
+    console.error("Failed to store HubSpot installation:", error)
+    return { success: false, error }
+  }
+}
+
+// Get a HubSpot installation by portal ID
+export async function getHubSpotInstall(portalId: string) {
+  try {
+    const { data, error } = await supabaseAdmin.from("hubspot_installs").select("*").eq("portalId", portalId).single()
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    if (!data) {
+      return { success: false, error: "Installation not found" }
+    }
+
+    return { success: true, install: data }
+  } catch (error) {
+    console.error("Failed to get HubSpot installation:", error)
+    return { success: false, error }
+  }
+}
+
+// Get all HubSpot installations
+export async function getAllHubSpotInstalls() {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("hubspot_installs")
+      .select("*")
+      .order("createdAt", { ascending: false })
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    return { success: true, installs: data }
+  } catch (error) {
+    console.error("Failed to get HubSpot installations:", error)
+    return { success: false, error }
+  }
+}
+
+// Delete a HubSpot installation
+export async function deleteHubSpotInstall(portalId: string) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("hubspot_installs")
+      .delete()
+      .eq("portalId", portalId)
+      .select()
+      .single()
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    if (!data) {
+      return { success: false, error: "Installation not found" }
+    }
+
+    return { success: true, install: data }
+  } catch (error) {
+    console.error("Failed to delete HubSpot installation:", error)
+    return { success: false, error }
+  }
+}
+
+// Check if an access token is expired and refresh it if needed
+export async function getValidAccessToken(portalId: string) {
+  try {
+    const { success, install, error } = await getHubSpotInstall(portalId)
+
+    if (!success) {
+      return { success: false, error }
+    }
+
+    // Check if the token is expired
+    const now = new Date()
+    const expiresAt = new Date(install.expiresAt)
+
+    if (expiresAt <= now) {
+      // Token is expired, we need to refresh it
+      // This will be implemented in the next step
+      return { success: false, error: "Token expired, refresh not implemented yet" }
+    }
+
+    return { success: true, accessToken: install.accessToken }
+  } catch (error) {
+    console.error("Failed to get valid access token:", error)
+    return { success: false, error }
+  }
+}
+
