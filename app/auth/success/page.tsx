@@ -68,10 +68,10 @@ export default function AuthSuccess() {
               <div className="bg-green-50 border border-green-200 p-4 rounded-md mb-6">
                 <p className="text-green-800 font-medium">✅ Installation successful</p>
                 <p className="text-sm text-green-700 mt-1">
-                  Connected on: {new Date(installInfo.createdAt).toLocaleString()}
+                  Connected on: {new Date(installInfo.created_at).toLocaleString()}
                 </p>
                 <p className="text-sm text-green-700">
-                  Token expires: {new Date(installInfo.expiresAt).toLocaleString()}
+                  Token expires: {new Date(installInfo.expires_at).toLocaleString()}
                 </p>
               </div>
             )}
