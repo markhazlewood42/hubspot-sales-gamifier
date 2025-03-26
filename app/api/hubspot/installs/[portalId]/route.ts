@@ -20,6 +20,7 @@ export async function GET(request: Request, { params }: { params: { portalId: st
     }
 
     // Don't expose sensitive tokens in the response
+    console.log("Got install data from DB: ", JSON.stringify(result.install));
     const { accessToken, refreshToken, ...safeInstall } = result.install
 
     return NextResponse.json({ success: true, install: safeInstall })
