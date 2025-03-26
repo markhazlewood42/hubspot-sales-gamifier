@@ -7,12 +7,12 @@ import { supabaseAdmin } from "./supabase"
 // Type definition for HubSpot installation
 export type HubSpotInstall = {
   id?: number
-  portalId: string
-  accessToken: string
-  refreshToken: string
-  expiresAt: Date
-  createdAt?: Date
-  updatedAt?: Date
+  portal_id: string
+  access_token: string
+  refresh_token: string
+  expires_at: Date
+  created_at?: Date
+  updated_at?: Date
 }
 
 // Initialize the database by creating necessary tables if they don't exist
@@ -63,10 +63,10 @@ export async function storeHubSpotInstall(
       result = await supabaseAdmin
         .from("hubspot_installs")
         .update({
-          accessToken: accessToken,
-          refreshToken: refreshToken,
-          expiresAt: expiresAt.toISOString(),
-          updatedAt: new Date().toISOString(),
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          expires_at: expiresAt.toISOString(),
+          updated_at: new Date().toISOString(),
         })
         .eq("portal_id", portalId)
         .select()
@@ -76,12 +76,12 @@ export async function storeHubSpotInstall(
       result = await supabaseAdmin
         .from("hubspot_installs")
         .insert({
-          portalId: portalId,
-          accessToken: accessToken,
-          refreshToken: refreshToken,
-          expiresAt: expiresAt.toISOString(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          portal_id: portalId,
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          expires_at: expiresAt.toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         })
         .select()
         .single()
@@ -124,7 +124,7 @@ export async function getAllHubSpotInstalls() {
     const { data, error } = await supabaseAdmin
       .from("hubspot_installs")
       .select("*")
-      .order("createdAt", { ascending: false })
+      .order("created_at", { ascending: false })
 
     if (error) {
       return { success: false, error: error.message }
@@ -173,7 +173,7 @@ export async function getValidAccessToken(portalId: string) {
 
     // Check if the token is expired
     const now = new Date()
-    const expiresAt = new Date(install.expiresAt)
+    const expiresAt = new Date(install.expires_at)
 
     if (expiresAt <= now) {
       // Token is expired, we need to refresh it
@@ -181,10 +181,9 @@ export async function getValidAccessToken(portalId: string) {
       return { success: false, error: "Token expired, refresh not implemented yet" }
     }
 
-    return { success: true, accessToken: install.accessToken }
+    return { success: true, accessToken: install.access_token }
   } catch (error) {
     console.error("Failed to get valid access token:", error)
     return { success: false, error }
   }
 }
-
