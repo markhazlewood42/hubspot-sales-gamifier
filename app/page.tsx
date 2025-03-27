@@ -2,22 +2,22 @@
  * Home page component that displays the main landing page with a HubSpot OAuth connection button.
  * Serves as the entry point for users to initiate the OAuth flow with HubSpot.
  */
-import { headers } from "next/headers"
-import { getOAuthUrl } from "@/lib/hubspot"
+import { headers } from "next/headers";
+import * as hubspot from "@/lib/hubspot";
 
 // In Next.js App Router, each page.tsx file automatically becomes a route
 // This file creates the root route (/) of your application
-export default function Home() {
+export default async function Home() {
   // Next.js provides a headers() function to access HTTP headers on the server
   // This is a server-side function and only works in Server Components
-  const headersList = headers()
-  const host = headersList.get("host") || ""
-  const protocol = process.env.NODE_ENV === "development" ? "http" : "https"
-  const baseUrl = `${protocol}://${host}`
+  const headersList = await headers();
+  const host = headersList.get("host") || "";
+  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+  const baseUrl = `${protocol}://${host}`;
 
   // Construct the OAuth URL using the official client
-  const redirectUri = `${baseUrl}/api/auth/hubspot/callback`
-  const oauthUrl = getOAuthUrl(redirectUri)
+  const redirectUri = `${baseUrl}/api/auth/hubspot/callback`;
+  const oauthUrl = hubspot.auth.getOAuthUrl(redirectUri);
 
   return (
     // In Next.js, you can use regular HTML elements and CSS classes
@@ -36,6 +36,6 @@ export default function Home() {
         </a>
       </div>
     </main>
-  )
+  );
 }
 

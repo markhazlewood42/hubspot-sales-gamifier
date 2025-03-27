@@ -8,7 +8,7 @@ import { Client } from "@hubspot/api-client";
 const hubspotClient = new Client({ basePath: "https://api.hubapiqa.com" });
 
 // Type definition for HubSpot installation
-export type HubSpotInstall = {
+type HubSpotInstall = {
   id?: number,
   portal_id: number,
   access_token: string,
