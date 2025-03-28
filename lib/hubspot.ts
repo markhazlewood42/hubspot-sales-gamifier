@@ -21,6 +21,9 @@ type HubSpotInstall = {
 // A local cache for storing install info, refreshed from the install database if needed
 const installCache: Record<string, HubSpotInstall> = {};
 
+console.log("Mounting hubspot.ts ...");
+console.log("installcache: ", installCache);
+
 export namespace auth {
   
   // Get OAuth URL
