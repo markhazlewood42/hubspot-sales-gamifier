@@ -2,6 +2,7 @@
  * Database utility functions for connecting to Supabase and managing app data.
  * Provides methods for storing and retrieving HubSpot app installations.
  */
+import { create } from "domain";
 import { supabaseAdmin } from "./supabase";
 
 // Initialize the database by creating necessary tables if they don't exist

@@ -13,9 +13,9 @@ type HubSpotInstall = {
   portal_id: number,
   access_token: string,
   refresh_token: string,
-  expires_at: Date,
-  created_at?: Date,
-  updated_at?: Date
+  expires_at: string,
+  created_at?: string,
+  updated_at?: string
 };
 
 // A local cache for storing install info, refreshed from the install database if needed
@@ -67,19 +67,23 @@ export namespace auth {
                                       refreshToken: string,
                                       expiresIn: number) {
     try {
-      // Calculate the expiration timestamp
+      // Get creation and expiration timestamps
+      const createDate = new Date();
       const expiration = new Date(Date.now() + expiresIn * 1000);
-
+      
       // Update in-memory cache
       installCache[portalId] = {
         portal_id: portalId,
         access_token: accessToken,
         refresh_token: refreshToken,
-        expires_at: expiration
+        expires_at: expiration.toISOString(),
+        created_at: createDate.toISOString(),
+        updated_at: createDate.toISOString()
       };
 
       // Update database
-      return await db.storeHubSpotInstall(portalId, accessToken, refreshToken, expiration);
+      return await db.storeHubSpotInstall(portalId, 
+        accessToken, refreshToken, expiration);
     }
     catch (error) {
       console.error("Error storing install info:", error);
@@ -97,7 +101,7 @@ export namespace api {
       // Check if we have an install for this portal
       if (installCache[portalId]) {
         // Check if the access token is expired
-        if (installCache[portalId].expires_at > new Date()) {
+        if (Date.parse(installCache[portalId].expires_at) > Date.now()) {
           // Token is expired, refresh
           const tokenData = await auth.refreshToken(installCache[portalId].refresh_token);
           

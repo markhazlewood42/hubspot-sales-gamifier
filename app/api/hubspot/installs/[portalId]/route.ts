@@ -13,7 +13,7 @@ export async function GET(request: Request, { params }: { params: { portalId: st
   }
 
   try {
-    const result = await getHubSpotInstall(portalId)
+    const result = await getHubSpotInstall(portalId);
 
     if (!result.success) {
       return NextResponse.json({ success: false, error: result.error }, { status: 404 })
