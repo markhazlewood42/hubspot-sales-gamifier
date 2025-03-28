@@ -102,7 +102,7 @@ export async function getHubSpotInstall(portalId: string) {
       return { success: false, error: "Installation not found" };
     }
 
-    return { success: true, install: data };
+    return { success: true, installRecord: data };
   } 
   catch (error) {
     console.error("Failed to get HubSpot installation:", error);
@@ -152,33 +152,6 @@ export async function deleteHubSpotInstall(portalId: string) {
   } 
   catch (error) {
     console.error("Failed to delete HubSpot installation:", error);
-    return { success: false, error };
-  }
-}
-
-// Check if an access token is expired and refresh it if needed
-export async function getValidAccessToken(portalId: string) {
-  try {
-    const { success, install, error } = await getHubSpotInstall(portalId);
-
-    if (!success) {
-      return { success: false, error };
-    }
-
-    // Check if the token is expired
-    const now = new Date();
-    const expiresAt = new Date(install.expires_at);
-
-    if (expiresAt <= now) {
-      // Token is expired, we need to refresh it
-      // This will be implemented in the next step
-      return { success: false, error: "Token expired, refresh not implemented yet" };
-    }
-
-    return { success: true, accessToken: install.access_token };
-  } 
-  catch (error) {
-    console.error("Failed to get valid access token:", error);
     return { success: false, error };
   }
 }

@@ -51,7 +51,7 @@ export async function GET(request: Request) {
 
     // Redirect to a success page with the portal ID
     // We no longer need to expose tokens in the URL since they're stored in the database
-    return NextResponse.redirect(new URL(`/auth/success?portalId=${accountData.hubId}`, request.url))
+    return NextResponse.redirect(new URL(`/auth/success?portalId=${accountData.hubId}`, request.url));
   } 
   catch (error) {
     console.error("OAuth error:", error);

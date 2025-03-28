@@ -7,23 +7,6 @@ import * as db from "@/lib/db";
 import { Client } from "@hubspot/api-client";
 const hubspotClient = new Client({ basePath: "https://api.hubapiqa.com" });
 
-// Type definition for HubSpot installation
-type HubSpotInstall = {
-  id?: number,
-  portal_id: number,
-  access_token: string,
-  refresh_token: string,
-  expires_at: string,
-  created_at?: string,
-  updated_at?: string
-};
-
-// A local cache for storing install info, refreshed from the install database if needed
-const installCache: Record<string, HubSpotInstall> = {};
-
-console.log("Mounting hubspot.ts ...");
-console.log("installcache: ", installCache);
-
 export namespace auth {
   
   // Get OAuth URL
@@ -73,16 +56,6 @@ export namespace auth {
       // Get creation and expiration timestamps
       const createDate = new Date();
       const expiration = new Date(Date.now() + expiresIn * 1000);
-      
-      // Update in-memory cache
-      installCache[portalId] = {
-        portal_id: portalId,
-        access_token: accessToken,
-        refresh_token: refreshToken,
-        expires_at: expiration.toISOString(),
-        created_at: createDate.toISOString(),
-        updated_at: createDate.toISOString()
-      };
 
       // Update database
       return await db.storeHubSpotInstall(portalId, 
@@ -93,41 +66,45 @@ export namespace auth {
       return { success: false, error };
     }
   }
+
+  // Check if an access token is expired and refresh it if needed
+  export async function getValidAccessToken(portalId: string) {
+    try {
+      const { success, installRecord, error } = await db.getHubSpotInstall(portalId);
+
+      if (!success) {
+        return { success: false, error };
+      }
+
+      // Check if the token is expired
+      const now = new Date();
+      const expiresAt = new Date(installRecord.expires_at);
+
+      if (expiresAt <= now) {
+        // Token is expired, we need to refresh it
+        const tokenData = await refreshToken(installRecord.refresh_token);
+        return { success: true, accessToken: tokenData.accessToken };        
+      }
+
+      return { success: true, accessToken: installRecord.access_token };
+    } 
+    catch (error) {
+      console.error("Failed to get valid access token:", error);
+      return { success: false, error };
+    }
+  }
 }
 
 export namespace api {
-
-  // Get access token for portal
-  // This retrieves the access token for a given portal ID
-  async function getAccessTokenForPortal(portalId: number) {
-    try {
-      // Check if we have an install for this portal
-      if (installCache[portalId]) {
-        // Check if the access token is expired
-        if (Date.parse(installCache[portalId].expires_at) > Date.now()) {
-          // Token is expired, refresh
-          const tokenData = await auth.refreshToken(installCache[portalId].refresh_token);
-          
-          // This will update both the DB and the local cache, so we can use local cache for future calls
-          auth.storeInstall(portalId, tokenData.accessToken, tokenData.refreshToken, tokenData.expiresIn);
-        }
-        return installCache[portalId].access_token;
-      }
-    }
-    catch (error) {
-      console.error("Error getting access token:", error);
-      return null;
-    }
-  }
 
   // Get HubSpot account info
   // This retrieves information about the HubSpot account associated with the given portal
   export async function getAccountInfoFromPortal(portalId: number) {
     try {
-      const accessToken = await getAccessTokenForPortal(portalId);
-      if (accessToken) {
-        hubspotClient.setAccessToken(accessToken);
-        const accountInfo = await hubspotClient.oauth.accessTokensApi.get(accessToken);
+      const tokenData = await auth.getValidAccessToken(portalId.toString());
+      if (tokenData.success) {
+        hubspotClient.setAccessToken(tokenData.accessToken);
+        const accountInfo = await hubspotClient.oauth.accessTokensApi.get(tokenData.accessToken);
         return accountInfo;
       }
     }
@@ -147,9 +124,9 @@ export namespace api {
   // Get HubSpot deals
   // This retrieves a list of deals from the HubSpot CRM
   export async function getDeals(portalId: number, limit = 10) {
-    const accessToken = await getAccessTokenForPortal(portalId);
-    if (accessToken) {
-      hubspotClient.setAccessToken(accessToken);
+    const tokenData = await auth.getValidAccessToken(portalId.toString());
+    if (tokenData.success) {
+      hubspotClient.setAccessToken(tokenData.accessToken);
     } 
     else {
       throw new Error("Access token is missing or invalid.");
@@ -160,9 +137,9 @@ export namespace api {
   // Get HubSpot contacts
   // This retrieves a list of contacts from the HubSpot CRM
   export async function getContacts(portalId: number, limit = 10) {
-    const accessToken = await getAccessTokenForPortal(portalId);
-    if (accessToken) {
-      hubspotClient.setAccessToken(accessToken);
+    const tokenData = await auth.getValidAccessToken(portalId.toString());
+    if (tokenData.success) {
+      hubspotClient.setAccessToken(tokenData.accessToken);
     } 
     else {
       throw new Error("Access token is missing or invalid.");
@@ -173,9 +150,9 @@ export namespace api {
   // Get HubSpot owners (sales reps)
   // This retrieves a list of owners (users) from the HubSpot CRM
   export async function getOwners(portalId: number) {
-    const accessToken = await getAccessTokenForPortal(portalId);
-    if (accessToken) {
-      hubspotClient.setAccessToken(accessToken);
+    const tokenData = await auth.getValidAccessToken(portalId.toString());
+    if (tokenData.success) {
+      hubspotClient.setAccessToken(tokenData.accessToken);
     } 
     else {
       throw new Error("Access token is missing or invalid.");
