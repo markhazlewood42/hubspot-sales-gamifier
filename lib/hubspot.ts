@@ -5,7 +5,7 @@
 
 import * as db from "@/lib/db";
 import { Client } from "@hubspot/api-client";
-const hubspotClient = new Client({ basePath: "https://api.hubapiqa.com" });
+const hubspotClient = new Client();
 
 export namespace auth {
   
