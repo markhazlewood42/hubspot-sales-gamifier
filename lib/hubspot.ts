@@ -13,7 +13,7 @@ export namespace auth {
   // This generates the URL that users will visit to authorize your app
   export function getOAuthUrl(redirectUri: string) {
     // Define the scopes (permissions) your app needs as an array
-    const scopes = ["crm.objects.contacts.read", "crm.objects.deals.read", "crm.objects.owners.read"].join(" ");
+    const scopes = process.env.APP_SCOPES || "crm.objects.contacts.read";
 
     // The correct parameter order is: clientId, redirectUri, scopes (as a space-separated string)
     return hubspotClient.oauth.getAuthorizationUrl(process.env.HUBSPOT_CLIENT_ID, redirectUri, scopes);
